@@ -42,6 +42,29 @@ class HelpersController extends Controller
         echo PHP_EOL. 'database should be empty now.' . PHP_EOL;
     }
 
+    public function actionDropTables($db, $tables = null)
+    {
+        $db = Yii::$app->get($db);
+        $all_tables = $db->schema->getTableNames();
+        $tablesArr = explode(',', $tables);
+        print_r($tablesArr);
+        if (!$all_tables || empty($tablesArr)) {
+            echo 'nothing to drop.'. PHP_EOL;
+            return 0;
+        }
+
+        Yii::$app->db->createCommand("SET foreign_key_checks = 0")->execute();
+        foreach ($all_tables as $table) {
+            if(in_array($table, $tablesArr)) {
+                $db->createCommand()->dropTable($table)->execute();
+                echo 'dropped table "' . $table . '".'. PHP_EOL;
+            }
+        }
+        Yii::$app->db->createCommand("SET foreign_key_checks = 1")->execute();
+
+        echo PHP_EOL. 'selected tables should be dropped now.' . PHP_EOL;
+    }
+
 
     public function actionAddRestRulesToFile($file, $controllers)
     {

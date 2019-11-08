@@ -87,8 +87,26 @@ class Generator extends \tunecino\builder\Generator
         if ($this->migrationTable) $migDownCmd .= ' --migrationTable="'.$this->migrationTable.'"';
         $migDownCmd .= ' --interactive=0';
 
-        $dropDbCmd = 'yii '. Yii::$app->controller->module->id . '/helpers/drop-all-tables';
+        // TW HACK START
+        $tables = [];
+        foreach ($this->schema->entities as $entity) {
+            $tables[] = $entity->name;
+
+            foreach ($entity->relationships as $relation) {
+                if ($relation->isManyToMany() && $this->createdJunction($entity->name, $relation->relatedTo->name) === false) {
+                    $tables[] = $entity->name . '_' . $relation->relatedTo->name;
+                }
+            }
+        }
+
+        //$dropDbCmd = 'yii '. Yii::$app->controller->module->id . '/helpers/drop-all-tables';
+        //if ($this->db) $dropDbCmd .= ' '.$this->db;
+
+        // TW HACK END
+
+        $dropDbCmd = 'yii '. Yii::$app->controller->module->id . '/helpers/drop-tables';
         if ($this->db) $dropDbCmd .= ' '.$this->db;
+        $dropDbCmd .= ' '.implode(',', $tables);
 
         $flushDbCmd = 'yii cache/flush-schema ' . $this->db;
         if ($this->appconfig) $flushDbCmd .= ' --appconfig="'.$this->appconfig.'"';
